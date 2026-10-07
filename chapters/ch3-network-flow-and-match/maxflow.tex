@@ -1,0 +1,190 @@
+\section{最大流}
+
+\subsection{ISAP 算法（带当前弧优化 + gap 优化）}
+\par \noindent ISAP 从汇点开始反向 BFS 标号，然后在 DFS 过程中不断更新距离标号。使用 gap 优化：当某一层节点数变为 0 时，说明出现断层，可以提前终止。时间复杂度 $O(n^2m)$，常数比 Dinic 更小。
+
+\begin{minted}{c++}
+const int N=210,M=100000;
+struct MS
+{
+    int to,next;
+    int z;
+}e[M];
+int elast[N],k=1;
+void add(int x,int y,int z)
+{
+    e[++k].to=y,e[k].z=z,e[k].next=elast[x],elast[x]=k;
+    e[++k].to=x,e[k].z=0,e[k].next=elast[y],elast[y]=k;
+}
+int n,m,st,en;
+int ans;
+int dis[N],cnt[N];
+
+void bfs(int en)
+{
+    queue<int>q;
+    q.push(en);
+    for(int i=1;i<=N-10;i++)dis[i]=-1,cnt[i]=0;
+    dis[en]=0;
+    cnt[0]=1;
+    while(!q.empty())
+    {
+        int now=q.front();q.pop();
+        for(int i=elast[now];i;i=e[i].next)
+        {
+            int to=e[i].to;
+            if(dis[to]==-1)
+            {
+                dis[to]=dis[now]+1;
+                cnt[dis[to]]++;
+                q.push(to);
+            }
+        }
+    }
+}
+int dfs(int x,int flow)
+{
+    if(x==en)return flow;
+    int d=0;
+    for(int i=elast[x];i;i=e[i].next)
+    {
+        int to=e[i].to;
+        if(e[i].z&&dis[x]==dis[to]+1)
+        {
+            int tmp=dfs(to,min(e[i].z,flow-d));
+            e[i].z-=tmp;e[i^1].z+=tmp;d+=tmp;
+            if(d==flow||dis[st]>=n)return d;
+        }
+    }
+    if(--cnt[dis[x]]==0)dis[st]=n;
+    cnt[++dis[x]]++;
+    return d;
+}
+signed main()
+{
+    scanf("%d%d%d%d",&n,&m,&st,&en);
+    for(int i=1;i<=m;i++)
+    {
+        int x,y,z;
+        scanf("%d%d%d",&x,&y,&z);
+        add(x,y,z);
+    }
+    bfs(en);
+    while(dis[st]<n)ans+=dfs(st,1e9);
+    printf("%d",ans);
+}
+\end{minted}
+
+\subsection{无源汇上下界可行流}
+\par \textbf{问题：} 给定一个网络，求一个流满足：每条边的流量处在给定的下界和上界 [lower,upper] 之间，满足流量守恒
+
+\begin{itemize}
+\item 记 $A(u)=\sum_{to[i]=u}f(i)-\sum_{from[i]=u}f(i)$ 即流入减去流出
+\item 若 $A(u)>0$，源点 $S$ 向 $u$ 点连边，容量是 $A(u)$
+\item 若 $A(u)<0$，$u$ 点向汇点 $T$ 连边，容量是 $-A(u)$
+\end{itemize}
+如果\textbf{满流}（虚拟源点 S 流跑满）此时即可求出流2（否则无解），再加上流1即是满足题意的可行流
+
+\begin{minted}{c++}
+signed main()
+{
+    cin>>n>>m;
+    S=0,T=n+1; // 虚拟源点 汇点
+    for(int i=1;i<=m;i++)
+    {
+        int x,y,c,d;
+        cin>>x>>y>>c>>d;
+        add(x,y,d-c);
+        in[y]+=c,out[x]+=c;
+        l[i]=c;
+    }
+    int sum=0;
+    for(int i=1;i<=n;i++)
+    {
+        if(in[i]>out[i])
+            add(S,i,in[i]-out[i]),sum+=in[i]-out[i]; // 满流
+        else
+            add(i,T,out[i]-in[i]);
+    }
+    st=S,en=T;
+    bfs(en);
+    while(dis[st]<n+2)res+=dfs(st,1e9);
+    if(sum!=res)
+        cout<<"NO\n";
+    else
+    {
+        cout<<"YES\n";
+        for(int x=1;x<=n;x++)
+            for(int i=elast[x];i;i=e[i].next)
+                if(i&1)
+                    ans[i/2]=e[i].z;
+        for(int i=1;i<=m;i++)
+            cout<<ans[i]+l[i]<<'\n';
+    }
+    return 0;
+}
+\end{minted}
+
+\subsection{有源汇上下界最大流}
+\par \noindent 连接一条 $t\to s$ 下界是 0 上界是 $\infty$ 的边，由此转化循环流问题（无源汇上下界可行流）
+\par \noindent 
+\par \noindent 按照循环流问题建图，首先跑 $S \to T$ 的 ISAP 是否能够找到一条可行流（即判断是否是满流）然后在换源点和汇点并删去 $t\to s$ 的边再跑一边 $s\to t$ 的 ISAP（榨干残留网络），可行流 + 第二次 ISAP 即是最大流
+
+\begin{minted}{c++}
+signed main()
+{
+    // ............. 无源汇上下界可行流建图
+    add(t,s,1e9);
+
+    st=S,en=T;
+    bfs(en);
+    while(dis[st]<n+2)res+=dfs(st,1e9);
+
+    if(res!=sum)
+    {
+        cout<<"No Solution\n";
+        return 0;
+    }
+
+    // 删去 t->s 容量是 1e9 这条边
+    res=e[k].z;
+    e[k].z=e[k^1].z=0;
+
+    st=s,en=t;
+    bfs(en);
+    while(dis[st]<n+2)res+=dfs(st,1e9);
+    cout<<res;
+    return 0;
+}
+\end{minted}
+
+\subsection{有源汇上下界最小流}
+\par \noindent 最小流 = 可行流 + $s\to t$ 流，由于可行流固定，为了使结果最小即 $s\to t$ 流最小，由于 $s\to t$ 的流 = $-t\to s$ 的流，如果 $t\to s$ 求最大流，那么 $s\to t$ 就是最小流，$f_{s\to t}=-f_{t\to s}$ 这也是为什么相减的原因。
+
+\begin{minted}{c++}
+signed main()
+{
+    // ............. 无源汇上下界可行流建图
+    add(t,s,1e9);
+
+    st=S,en=T;
+    bfs(en);
+    while(dis[st]<n+2)res+=dfs(st,1e9);
+
+    if(res!=sum)
+    {
+        cout<<"No Solution\n";
+        return 0;
+    }
+
+    // 删去 t->s 容量是 1e9 这条边
+    res=e[k].z;
+    e[k].z=e[k^1].z=0;
+
+    st=t,en=s;
+    bfs(en);
+    while(dis[st]<n+2)res-=dfs(st,1e9); // f(s->t) = - f(t->s)
+    cout<<res;
+    return 0;
+}
+\end{minted}

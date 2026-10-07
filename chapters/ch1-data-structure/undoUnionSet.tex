@@ -1,0 +1,322 @@
+\section{并查集}
+
+\par \noindent 并查集维护若干个不相交集合，支持合并两个集合与查询元素所在集合。常见变体包括按秩合并、带权并查集、异或并查集、可撤销并查集、扩展域并查集等。
+
+\subsection{普通并查集（路径压缩 + 按秩合并）}
+
+\par \noindent 路径压缩使查询接近常数；按秩合并保证树高为 $O(\log n)$。两者结合后单次操作均摊 $O(\alpha(n))$。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[N],rnk[N];
+
+void init(int n)
+{
+    for(int i=1;i<=n;i++)
+    {
+        fa[i]=i;
+        rnk[i]=1;
+    }
+}
+
+int find(int x)
+{
+    if(fa[x]==x)return x;
+    return fa[x]=find(fa[x]);
+}
+
+void merge(int x,int y)
+{
+    int fx=find(x),fy=find(y);
+    if(fx==fy)return;
+    if(rnk[fx]<rnk[fy])swap(fx,fy);
+    fa[fy]=fx;
+    if(rnk[fx]==rnk[fy])rnk[fx]++;
+}
+\end{minted}
+
+\subsection{按大小合并的并查集}
+
+\par \noindent 用集合大小代替秩，效果类似，且便于统计连通块大小。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[N],sz[N];
+
+void init(int n)
+{
+    for(int i=1;i<=n;i++)
+    {
+        fa[i]=i;
+        sz[i]=1;
+    }
+}
+
+int find(int x)
+{
+    if(fa[x]==x)return x;
+    return fa[x]=find(fa[x]);
+}
+
+void merge(int x,int y)
+{
+    int fx=find(x),fy=find(y);
+    if(fx==fy)return;
+    if(sz[fx]<sz[fy])swap(fx,fy);
+    fa[fy]=fx;
+    sz[fx]+=sz[fy];
+}
+\end{minted}
+
+\subsection{带权并查集（距离）}
+
+\par \noindent 每个节点额外维护它到父节点的权值（如距离）。路径压缩时同步更新权值。合并时根据关系推导两个根之间的权值。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[N],rnk[N],dis[N]; // dis[x] 表示 x 到父节点的距离
+
+void init(int n)
+{
+    for(int i=1;i<=n;i++)
+    {
+        fa[i]=i;
+        rnk[i]=1;
+        dis[i]=0;
+    }
+}
+
+int find(int x)
+{
+    if(fa[x]==x)return x;
+    int p=find(fa[x]);
+    dis[x]+=dis[fa[x]];
+    return fa[x]=p;
+}
+
+// 合并 x 与 y，使得 x 到 y 的距离为 w
+void merge(int x,int y,int w)
+{
+    int fx=find(x),fy=find(y);
+    if(fx==fy)return;
+    if(rnk[fx]<rnk[fy])
+    {
+        swap(fx,fy);
+        swap(x,y);
+        w=-w;
+    }
+    fa[fy]=fx;
+    dis[fy]=dis[x]+w-dis[y];
+    if(rnk[fx]==rnk[fy])rnk[fx]++;
+}
+\end{minted}
+
+\subsection{异或并查集}
+
+\par \noindent 每个节点维护它到根的异或值 $d[x]$。合并时已知 $x \oplus y = w$，推导两个根之间的异或关系。常用于维护变量间的异或约束。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[N],rnk[N],d[N]; // d[x] 表示 x 到根的异或值
+
+void init(int n)
+{
+    for(int i=1;i<=n;i++)
+    {
+        fa[i]=i;
+        rnk[i]=1;
+        d[i]=0;
+    }
+}
+
+int find(int x)
+{
+    if(fa[x]==x)return x;
+    int p=find(fa[x]);
+    d[x]^=d[fa[x]];
+    return fa[x]=p;
+}
+
+// 合并 x 与 y，满足 x xor y = w
+void merge(int x,int y,int w)
+{
+    int fx=find(x),fy=find(y);
+    if(fx==fy)return;
+    if(rnk[fx]<rnk[fy])
+    {
+        swap(fx,fy);
+        swap(x,y);
+    }
+    fa[fy]=fx;
+    d[fy]=d[x]^d[y]^w;
+    if(rnk[fx]==rnk[fy])rnk[fx]++;
+}
+\end{minted}
+
+\subsection{可撤销并查集}
+
+\par \noindent 不支持路径压缩，仅按秩合并，并用栈记录每次合并的操作。撤销时恢复被合并的节点及其大小。常用于线段树分治等离线算法。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[N],rnk[N],sz[N];
+vector<pair<int,int>> history; // 记录 (被合并的根, 新的根)
+
+void init(int n)
+{
+    for(int i=1;i<=n;i++)
+    {
+        fa[i]=i;
+        rnk[i]=1;
+        sz[i]=1;
+    }
+    history.clear();
+}
+
+int find(int x)
+{
+    while(fa[x]!=x)x=fa[x];
+    return x;
+}
+
+void merge(int x,int y)
+{
+    int fx=find(x),fy=find(y);
+    if(fx==fy)return;
+    if(rnk[fx]<rnk[fy])swap(fx,fy);
+    history.push_back({fy,fx});
+    fa[fy]=fx;
+    sz[fx]+=sz[fy];
+    if(rnk[fx]==rnk[fy])rnk[fx]++;
+}
+
+void rollback(int checkpoint)
+{
+    while((int)history.size()>checkpoint)
+    {
+        auto [fy,fx]=history.back();
+        history.pop_back();
+        fa[fy]=fy;
+        sz[fx]-=sz[fy];
+        // 若合并时增加了秩，可在 history 中额外记录以恢复
+    }
+}
+\end{minted}
+
+\subsection{可撤销带权并查集（异或版）}
+
+\par \noindent 结合可撤销与异或关系。合并时记录被合并根及其 $d$ 值，撤销时恢复。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[N],rnk[N],d[N];
+vector<tuple<int,int,int>> history; // (被合并根, 新根, 被合并根的 d 值)
+
+void init(int n)
+{
+    for(int i=1;i<=n;i++)
+    {
+        fa[i]=i;
+        rnk[i]=1;
+        d[i]=0;
+    }
+    history.clear();
+}
+
+int find(int x)
+{
+    int r=x,res=0;
+    while(fa[r]!=r)
+    {
+        res^=d[r];
+        r=fa[r];
+    }
+    return r;
+}
+
+// 获取 x 到根的异或值，并压缩路径（注意：可撤销版本不压缩，这里仅返回根和值）
+int find(int x,int &val)
+{
+    val=0;
+    while(fa[x]!=x)
+    {
+        val^=d[x];
+        x=fa[x];
+    }
+    return x;
+}
+
+void merge(int x,int y,int w)
+{
+    int vx,vy;
+    int fx=find(x,vx),fy=find(y,vy);
+    if(fx==fy)return;
+    if(rnk[fx]<rnk[fy])
+    {
+        swap(fx,fy);
+        swap(vx,vy);
+    }
+    history.push_back({fy,fx,d[fy]});
+    fa[fy]=fx;
+    d[fy]=vx^vy^w;
+    if(rnk[fx]==rnk[fy])rnk[fx]++;
+}
+
+void rollback(int checkpoint)
+{
+    while((int)history.size()>checkpoint)
+    {
+        auto [fy,fx,old_d]=history.back();
+        history.pop_back();
+        fa[fy]=fy;
+        d[fy]=old_d;
+        // 若合并时增加了秩，需额外记录恢复
+    }
+}
+\end{minted}
+
+\subsection{扩展域并查集（种类并查集）}
+
+\par \noindent 当需要维护多个互斥集合（如“朋友”与“敌人”）时，可将每个元素拆成若干副本，开 $k$ 倍空间，用普通并查集维护。例如维护两种关系时，令 $i$ 表示“$i$ 属于第一类”，$i+n$ 表示“$i$ 属于第二类”。
+
+\begin{minted}{c++}
+const int N=100005;
+int fa[2*N],rnk[2*N];
+
+void init(int n)
+{
+    for(int i=1;i<=2*n;i++)
+    {
+        fa[i]=i;
+        rnk[i]=1;
+    }
+}
+
+int find(int x)
+{
+    if(fa[x]==x)return x;
+    return fa[x]=find(fa[x]);
+}
+
+void merge(int x,int y)
+{
+    int fx=find(x),fy=find(y);
+    if(fx==fy)return;
+    if(rnk[fx]<rnk[fy])swap(fx,fy);
+    fa[fy]=fx;
+    if(rnk[fx]==rnk[fy])rnk[fx]++;
+}
+
+// 示例：x 与 y 是朋友，x 与 y+n 是敌人
+void add_friend(int x,int y)
+{
+    merge(x,y);
+    merge(x+n,y+n);
+}
+
+void add_enemy(int x,int y)
+{
+    merge(x,y+n);
+    merge(x+n,y);
+}
+\end{minted}

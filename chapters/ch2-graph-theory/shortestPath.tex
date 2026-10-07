@@ -1,0 +1,155 @@
+\section{最短路}
+
+\subsection{Dijkstra}
+
+\begin{minted}{c++}
+const int N=5e5+10;
+struct yqy
+{
+    int to,ne,z;
+}e[N<<2];
+int num,elast[N];
+void add(int x,int y,int z){e[++num]={y,elast[x],z};elast[x]=num;}
+int dis[N],vis[N];
+struct qwq
+{
+    int id,dis;
+    bool operator<(const qwq&x)const{return dis>x.dis;}
+    qwq(int id_,int dis_){id=id_,dis=dis_;}
+};
+priority_queue<qwq>q;
+void dij(int x)
+{
+    for(int i=0;i<N;i++)dis[i]=1e18;
+    dis[x]=0;q.push(qwq(x,0));
+    while(!q.empty())
+    {
+        auto now=q.top();q.pop();
+        if(vis[now.id]||dis[now.id]!=now.dis)continue;
+        vis[now.id]=1;
+        for(int i=elast[now.id];i;i=e[i].ne)
+        {
+            int to=e[i].to;
+            if(dis[to]>dis[now.id]+e[i].z)
+            {
+                dis[to]=dis[now.id]+e[i].z;
+                q.push(qwq(to,dis[to]));
+            }
+        }
+    }
+}
+signed main()
+{
+    int n=read(),m=read(),s=read();
+    for(int i=1;i<=m;i++)
+    {
+        int x=read(),y=read(),z=read();
+        add(x,y,z);
+    }
+    dij(s);
+    for(int i=1;i<=n;i++)cout<<dis[i]<<" ";cout<<endl;
+    return 0;
+}
+\end{minted}
+
+\subsection{SPFA 算法（负环）}
+\par \noindent 基于 SPFA 的负环判定，使用 inqcnt[v] 记录节点 v 的入队次数，如果有一个点的 inqcnt[v] > n，说明存在负环。
+~\\
+\par \noindent 或者记录最短路经过的边数，在不经过负环的情况下，最短路至多经过 n - 1 条边，因此如果经过了多于 n 条边，一定说明经过了负环
+\begin{minted}{c++}
+const int N=4e3+1,M=3e3+1;
+int t;
+int n,m;
+int u,v,w,flag;
+struct edge
+{
+    int to,ne,dis;
+}e[M<<2];
+int adj[N],l,vis[N],cnt[N],dis[N];
+inline void add(int x,int y,int z){e[++l].to=y,e[l].ne=adj[x],e[l].dis=z,adj[x]=l;}
+inline void SPFA(int st)
+{
+    queue<int> q;
+    q.push(st);
+    vis[st]=1;
+    dis[st]=0;
+    cnt[st]=1;
+    while(!q.empty())
+    {
+        int x=q.front();q.pop();
+        vis[x]=0;
+        for(int i=adj[x];i;i=e[i].ne)
+        {
+            int y=e[i].to;
+            if(dis[y]>dis[x]+e[i].dis)
+            {
+                dis[y]=dis[x]+e[i].dis;
+                cnt[y]++;
+                if(cnt[y]>n){flag=1;return;}
+                if(!vis[y])
+                {
+                    q.push(y);
+                    vis[y]=1;
+                }
+            }
+        }
+    }
+}
+signed main()
+{
+    scanf("%d",&t);
+    while(t--)
+    {
+        flag=l=0;
+        memset(vis,0,sizeof(vis));
+        memset(dis,0x7f7f7f7f,sizeof(dis));
+        memset(cnt,0,sizeof(cnt));
+        memset(adj,0,sizeof(adj));
+        scanf("%d%d",&n,&m);
+        for(int i=1;i<=m;i++)
+        {
+            scanf("%d%d%d",&u,&v,&w);
+            w>=0?add(u,v,w),add(v,u,w):add(u,v,w);
+        }
+        SPFA(1);
+        if(flag) printf("YES\n");
+        else printf("NO\n");
+    }
+}
+\end{minted}
+
+\subsection{同余最短路}
+\par \noindent 同余最短路用于求解在某个范围内有多少数值可由给定的一些数进行 \textbf{系数非负} 的线性组合得到。
+~\\
+\par \noindent 同余最短路的核心思想在于观察到：如果一个数 $r$ 可以被表出，那么任何 $r+xa_i(x>0)$也可以被表出。因此只需选出任意一个 $a_i$，求出每个模 $a_i$ 同余的同余类 $d_j$ 当中\textbf{最小}的能被表出的数 $f_j$，即可快速判断一个数 $S$ 能否被表出：当且仅当 $S\ge f(S \bmod a_i)$。
+
+\begin{tcolorbox}
+题目大意：给定 $x$，$y$，$z$，$h$，对于 $k \in [1,h]$，有多少个 $k$ 能够满足 $ax+by+cz=k$。（$0\leq a,b,c$，$1\le x,y,z\le 10^5$，$h\le 2^{63}-1$）
+\end{tcolorbox}
+
+\par \noindent 不妨假设 $x < y < z$。
+
+\par \noindent 令 $d_i$ 为只通过 \textbf{操作 2} 和 \textbf{操作 3}，需满足 $p\bmod x = i$ 能够达到的最低楼层 $p$，即\textbf{操作 2} 和 \textbf{操作 3} 操作后能得到的模 $x$ 下与 $i$ 同余的最小数，用来计算该同余类满足条件的数个数。
+~\\
+\par \noindent 可以得到两个状态：
+\begin{itemize}
+\item $i \xrightarrow{y} (i+y) \bmod x$
+\item $i \xrightarrow{z} (i+z) \bmod x$
+\end{itemize}
+
+\par \noindent 注意通常选取一组 $a_i$ 中最小的那个数对它取模，也就是此处的 $x$，这样可以尽量减小空间复杂度（剩余系最小）。
+~\\
+\par \noindent 那么实际上相当于执行了最短路中的建边操作：
+\begin{itemize}
+\item $\text{add}(i, (i+y) \bmod x, y)$
+\item $\text{add}(i, (i+z) \bmod x, z)$
+\end{itemize}
+
+\par \noindent 接下来只需要求出 $d_0, d_1, d_2, \dots, d_{x-1}$，只需要跑一次最短路就可求出相应的 $d_i$。
+~\\
+\par \noindent 与差分约束问题相同，当存在一组解 $\{a_1,a_2,\cdots,a_n\}$ 时，$\{a_1+d,a_2+d,\cdots,a_n+d\}$ 同样为一组解，因此在该题让 $i=1$ 作为源点，此时源点处的 $dis_{1}=1$ 在已知范围内最小，因此得到的也是一组最小的解。
+
+\par \noindent 答案即为：
+$$
+\sum_{i=0}^{x-1}\left(\frac{h-d_i}{x} + 1\right)
+$$

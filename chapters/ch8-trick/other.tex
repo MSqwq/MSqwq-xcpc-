@@ -1,0 +1,637 @@
+% 直接插入主文档的 LaTeX 片段
+% 每个独立技巧使用一个 subsection，内部证明或实现使用 subsubsection
+% 导言区必须加载：\usepackage{ctex,amsmath,amssymb,minted,hyperref}
+% minted 需要使用 -shell-escape 编译，例如：xelatex -shell-escape main.tex
+
+\section{其他常用技巧}
+
+\par\medskip\noindent\textbf{曼哈顿距离与切比雪夫距离}\par\smallskip
+
+令 $(x,y)\mapsto(u,v)=(x+y,x-y)$，则
+\[
+|x_1-x_2|+|y_1-y_2|=\max\{|u_1-u_2|,|v_1-v_2|\}.
+\]
+反变换 $(x,y)\mapsto((x+y)/2,(x-y)/2)$ 可以把切比雪夫距离转化为曼哈顿距离。
+
+\par\medskip\noindent\textbf{前缀异或}\par\smallskip
+
+设
+\[
+S(n)=1\oplus 2\oplus 3\oplus \cdots \oplus n,
+\]
+则有：
+\[
+S(n)=
+\begin{cases}
+n, & n \bmod 4 = 0,\\
+1, & n \bmod 4 = 1,\\
+n+1, & n \bmod 4 = 2,\\
+0, & n \bmod 4 = 3.
+\end{cases}
+\]
+
+\par\medskip\noindent\textbf{可重集合相等判断}\par\smallskip
+
+\textbf{定义}：\textbf{可重集合（Multiset）}：允许同一元素出现多次的集合。
+
+\textbf{问题描述}：
+\begin{quote}
+给定数组 $a$，多次询问：判断区间 $[L_1,R_1]$ 与 $[L_2,R_2]$ 所对应的可重集合是否相等。
+\end{quote}
+设每次询问的两个可重集合分别为 $S$ 和 $T$。
+
+\textbf{朴素做法}：
+直接的做法包括：
+\begin{itemize}
+  \item 将两个区间内的元素排序逐一比较。
+  \item 使用哈希表统计元素出现次数。
+\end{itemize}
+设 $|S|\le |T|$，以上方法单次询问的时间复杂度为
+\[
+\mathcal{O}(|S|\cdot\log|S|).
+\]
+
+\textbf{随机化做法（随机赋权哈希）}
+
+\par\medskip\noindent\textbf{定理}\par\smallskip
+如果两个可重集合相等，那么两个集合的元素和相等。
+
+那么通过比较两个集合的元素和是否能完成问题？
+
+\par\medskip\noindent\textbf{反例}\par\smallskip
+\[
+S=\{2,4\},\quad T=\{3,3\}.
+\]
+
+\par\medskip\noindent\textbf{改进思路}\par\smallskip
+为每一种元素 $x$ 随机赋予一个权值 $w(x)$，定义集合的哈希值为
+\[
+H(S)=\sum_{x\in S}w(x).
+\]
+判断两个集合是否相等，只需比较 $H(S)$ 和 $H(T)$。
+
+\par\medskip\noindent\textbf{正确性分析}\par\smallskip
+\begin{itemize}
+  \item 若 $S=T$，则显然有 $H(S)=H(T)$。
+  \item 若 $S\neq T$，设 $cnt_S(x),cnt_T(x)$ 分别表示元素 $x$ 在集合中的出现次数，则
+  \[
+  \sum (cnt_S(x)-cnt_T(x))\cdot w(x)=0.
+  \]
+  这是一个关于随机变量 $w(x)$ 的线性组合。在 $w(x)$ 独立随机且值域足够大的情况下，上式成立的概率极低。
+\end{itemize}
+
+\par\medskip\noindent\textbf{其他哈希形式}\par\smallskip
+也可以定义
+\[
+H(S)=\prod_{x\in S}w(x),
+\]
+同样可以用于判定可重集合相等（本质仍为随机映射）。
+
+\par\medskip\noindent\textbf{区间查询实现}\par\smallskip
+\begin{itemize}
+  \item 不带修，使用前缀和维护，单次查询时间复杂度 $\mathcal{O}(1)$。
+  \item 待修，使用数据结构（如树状数组/线段树）维护区间和，单次查询时间复杂度 $\mathcal{O}(\log n)$。
+\end{itemize}
+
+\par\medskip\noindent\textbf{扩展问题}\par\smallskip
+\begin{quote}
+给定数组 $a$，多次询问：判断区间 $[L_1,R_1]$ 中所有元素加上 $k$ 后，是否与区间 $[L_2,R_2]$ 的可重集合相等。
+\end{quote}
+
+设常数 $B$，定义哈希函数
+\[
+H(S)=\sum B^{a_i},
+\]
+则有
+\[
+H([L,R])=\sum_{i=L}^{R}B^{a_i}.
+\]
+区间整体加上 $k$ 后：
+\[
+H'([L,R])=\sum_{i=L}^{R}B^{a_i+k}=B^k\cdot\sum_{i=L}^{R}B^{a_i}=B^k\cdot H([L,R]).
+\]
+所以仅需要判断 $B^k\cdot H([L_1,R_1])$ 与 $H([L_2,R_2])$ 的关系即可。
+
+在部分题目中可能会需要圆周率的计算并且需要较高精度，此时可以直接用 \verb|#define pi acos(-1)| 来实现，也就是 $\arccos(-1)=\pi$。
+
+对于一个排列，前缀 mex 的询问可以转换为后缀最小值：
+\[
+\operatorname{mex}_{i=1}^j a_i = \min_{i=j+1}^n a_i.
+\]
+例题：\href{https://codeforces.com/contest/1905/problem/D}{Codeforces Round 915 (Div. 2) D. Cyclic MEX}。
+
+\par\medskip\noindent\textbf{$n!$ 末尾 $0$ 的个数}\par\smallskip
+公式如下：
+\[
+ans = \left\lfloor \frac{n}{5} \right\rfloor + \left\lfloor \frac{n}{25} \right\rfloor + \left\lfloor \frac{n}{125} \right\rfloor + \cdots
+\]
+计算 $n!$ 的末尾 $0$ 的个数，实际上就是计算 $1\times 2\times 3\times \cdots \times n$ 中因子 $10$ 的个数。因为 $10=2\times 5$，且在 $n!$ 中因子 $2$ 的个数远远多于因子 $5$ 的个数，所以只需要统计 $n!$ 中所有因子 $5$ 的个数即可。
+
+已知 $1$ 到 $n$ 中 $5$ 的倍数的个数为 $\left\lfloor \frac{n}{5} \right\rfloor$，但如果直接将 $\left\lfloor \frac{n}{5} \right\rfloor$ 当作答案会漏掉 $5$ 的个数，因为 $25=5\times 5$ 贡献了 $2$ 个 $5$，$125=5\times 5\times 5$ 贡献了 $3$ 个 $5$，等等。可以通过重复计数来补上这些漏掉的 $5$：
+\begin{itemize}
+  \item $\left\lfloor \frac{n}{5} \right\rfloor$ 统计所有 $5$ 的倍数贡献的第一个 $5$；
+  \item $\left\lfloor \frac{n}{25} \right\rfloor$ 统计所有 $25$ 的倍数贡献的第二个 $5$；
+  \item $\left\lfloor \frac{n}{125} \right\rfloor$ 统计所有 $125$ 的倍数贡献的第三个 $5$；
+  \item ……
+\end{itemize}
+这样一来就可以完整地统计出 $n!$ 中所有因子 $5$ 的个数了。
+
+\par\medskip\noindent\textbf{最长单调子序列与划分}\par\smallskip
+数列的最长\textbf{单调增加}子序列的长度，等于可将该数列划分成\textbf{单调不增}子序列的最少数量。
+
+数列的最长\textbf{单调减少}子序列的长度，等于可将该数列划分成\textbf{单调不减}子序列的最少数量。
+
+数列的最长\textbf{单调不减}子序列的长度，等于可将该数列划分成\textbf{单调减少}子序列的最少数量。
+
+数列的最长\textbf{单调不增}子序列的长度，等于可将该数列划分成\textbf{单调增加}子序列的最少数量。
+
+\begin{quote}
+请注意这里“\textbf{子序列}”的定义：从原序列中取出任意多个元素（可以不取，也可以全取），按照其在原序列中的原顺序排列，所得序列即为原序列的子序列。
+\end{quote}
+
+\par\medskip\noindent\textbf{平方和与和平方恒等式}\par\smallskip
+基于\textbf{平方和}与\textbf{和平方}之间的恒等式
+\[
+\left(\sum_{i=1}^n s_i\right)^2=\sum_{i=1}^n s_i^2+\sum_{i\neq j}s_i s_j,
+\]
+容易发现
+\[
+\sum_{i\neq j}s_i s_j=2\sum_{1\le i<j\le n}s_i s_j.
+\]
+所以有
+\[
+\sum_{1\le i<j\le n}s_i s_j = \frac{\left(\sum_{i=1}^n s_i\right)^2 - \sum_{i=1}^n s_i^2}{2}.
+\]
+应用：数组两两之间的乘积和（$\mathcal{O}(n^2)$ 降为 $\mathcal{O}(n)$）。
+
+\par\medskip\noindent\textbf{区间二元最大值/最小值计数转化为长度 + 前缀差分}\par\smallskip
+题目链接：\href{https://codeforces.com/contest/2121/problem/G}{CF2121G Gangsta}，\href{https://codeforces.com/contest/2131/problem/F}{CF2131F Unjust Binary Life}。
+
+当一个问题里只有两类东西，并且它们互补时，常常可以设
+\[
+A+B=L,
+\]
+这里 $L$ 往往是区间长度、前缀长度、路径长度之类的“总量”。
+
+这时候如果题目要求的是两者中的较大值或较小值，就可以直接改写：
+\[
+\max(A,B)=\frac{A+B+|A-B|}{2}=\frac{L+|A-B|}{2},
+\]
+\[
+\min(A,B)=\frac{A+B-|A-B|}{2}=\frac{L-|A-B|}{2}.
+\]
+于是，一个看起来不好处理的二元最大值/最小值问题，就被拆成了两部分：
+\[
+\text{答案}=\text{长度项} \pm \text{差分绝对值项}.
+\]
+其中：
+\begin{itemize}
+  \item 长度项 $L$ 是很好算的总量；
+  \item 真正需要处理的核心，变成了 $|A-B|$。
+\end{itemize}
+而对于后者，我们常见的做法就是将二元中的其中一个视为 $+1$，另一个视为 $-1$，于是我们就可以利用前缀和记录 $A-B$ 这个式子，那么消掉绝对值的办法自然就是排序，接下来计算贡献就只需要邻项做差然后对左右算贡献即可。最后的最后要记得对答案除以 $2$！
+
+\par\medskip\noindent\textbf{迷宫方向数组}\par\smallskip
+当你在做迷宫一类的题目时，肯定会遇到偏移的问题，建议直接把以下部分加入自己的火车头里，在需要的时候直接取消注释即可（也有人喜欢用二维数组，没有关系，因人而异，自己习惯就好）。
+\begin{minted}{c++}
+// const int dx[4] = {-1, 1, 0, 0};
+// const int dy[4] = {0, 0, -1, 1};
+// const int dx[8] = {-1, 0, 1, 1, 1, 0, -1, -1};
+// const int dy[8] = {1, 1, 1, 0, -1, -1, -1, 0};
+// const int dx[12] = {-1, 0, 1, 1, 1, 0, -1, -1, 0, 2, -2, 0};
+// const int dy[12] = {1, 1, 1, 0, -1, -1, -1, 0, 2, 0, 0, -2};
+\end{minted}
+
+\par\medskip\noindent\textbf{图中点的度数种类}\par\smallskip
+trick 来源：2023 湖北省赛 H 题。题目链接：\url{https://codeforces.com/gym/104337/problem/H}。
+
+一个图中点的度数的种类最多不超过 $\sqrt{m}$ 种。
+
+证明：由握手定理
+\[
+\sum_{i=1}^{n}\deg_i=2m.
+\]
+即：
+\[
+0+1+2+\cdots+k=\frac{k(k+1)}{2}=2m,
+\]
+所以 $k\le \sqrt{2m}$。因此，一个图中点的度的种类是根号级别的。所以原题可以直接暴力枚举本质不同的 $\deg_u$ 和 $\deg_v$ 即可。时间复杂度是 $\mathcal{O}(\sqrt{2m}\times\sqrt{2m})$，即 $\mathcal{O}(2m)$。
+
+\par\medskip\noindent\textbf{因子个数上限}\par\smallskip
+\begin{itemize}
+  \item 在小于 $10^5$ 的数中，一个数最多有 $128$ 个因子。
+  \item 在小于 $10^6$ 的数中，一个数最多有 $240$ 个因子。
+  \item 在小于 $10^7$ 的数中，一个数最多有 $448$ 个因子。
+  \item 在小于 $10^8$ 的数中，一个数最多有 $768$ 个因子。
+  \item 在小于 $10^9$ 的数中，一个数最多有 $1344$ 个因子。
+  \item 在小于 $10^{10}$ 的数中，一个数最多有 $2304$ 个因子。
+  \item 在小于 $10^{12}$ 的数中，一个数最多有 $6720$ 个因子。
+  \item 在小于 $10^{15}$ 的数中，一个数最多有 $26880$ 个因子。
+  \item 在小于 $10^{18}$ 的数中，一个数最多有 $103680$ 个因子。
+\end{itemize}
+
+\par\medskip\noindent\textbf{整数边三角形构造}\par\smallskip
+对于一个长度为 $n$ 的边，当 $n<3$ 时，无法构成三条正整数边的三角形；当 $n\ge 3$ 时，可以构造三条正整数边的三角形。
+
+其中当 $n$ 等于奇数时，另外两条边的值分别为
+\[
+\frac{x^2-1}{2},\quad \frac{x^2+1}{2}.
+\]
+当 $n$ 为偶数时，另外两条边的值分别为
+\[
+\frac{x^2}{4}-1,\quad \frac{x^2}{4}+1.
+\]
+例题：\url{https://ac.nowcoder.com/acm/contest/132940/F}
+
+\par\medskip\noindent\textbf{约数个数为奇数}\par\smallskip
+来源：\url{https://codeforces.com/problemset/problem/1731/C}
+
+一个数的约数个数是奇数等价于这个数是完全平方数。
+
+简单证明：对于任意正整数 $n$，若 $d$ 为其约数，则 $\frac{n}{d}$ 也是其约数。而完全平方数有特例 $d=\sqrt{n}$ 时，$d=\frac{n}{d}$。除此之外，约数成对出现。
+
+\par\medskip\noindent\textbf{曼哈顿距离转切比雪夫距离：例题应用}\par\smallskip
+令 $(x,y)\to (x+y,x-y)$，则
+\[
+|x_1-x_2|+|y_1-y_2|=\max(|x'_1-x'_2|,|y'_1-y'_2|).
+\]
+处理最大曼哈顿距离时，只需在新坐标系下维护 $x'$ 和 $y'$ 的 $\min/\max$ 值，即可 $\mathcal{O}(1)$ 得到结果。（曼哈顿转切比雪夫距离）
+
+例题：\url{https://atcoder.jp/contests/typical90/tasks/typical90_aj?lang=en}
+
+\par\medskip\noindent\textbf{取模除法性质}\par\smallskip
+\[
+\left\lfloor \frac{N}{M} \right\rfloor \bmod 10007 = \left\lfloor \frac{N \bmod (10007 \times M)}{M} \right\rfloor.
+\]
+例题：\href{https://atcoder.jp/contests/abc448/tasks/abc448_e}{abc448\_e}
+
+\par\medskip\noindent\textbf{树上点集距离最远点}\par\smallskip
+在树中，对于任意一个点集 $S$ 和树上任意一点 $x$（$x$ 可以不在 $S$ 中），$S$ 中距离 $x$ 最远的点，一定是 $S$ 的直径端点之一。
+
+\par\medskip\noindent\textbf{组合数奇偶性}\par\smallskip
+\[
+\binom{n}{m} \text{ 为奇数} \iff (m \& (n-m))=0.
+\]
+
+\par\medskip\noindent\textbf{快速求 popcount 和}\par\smallskip
+一种以 $\mathcal{O}(\log n)$ 求 $\sum_{i=1}^{n} \operatorname{popcount}(i)$ 的方法。
+
+直接按二进制位统计：
+\[
+\sum_{i=1}^{n} \operatorname{popcount}(i) = \sum_{i=1}^{\lceil \log_2(n) \rceil - 1} \big[((n \gg (i-1)) \& 1) = 1\big] \times \left( i \times 2^{i-1} + 2^{i} \times \operatorname{popcount}(n \gg i) \right).
+\]
+其中 $\big[((n \gg (i-1)) \& 1) = 1\big]$ 表示条件判断（满足时为 $1$，否则为 $0$）。
+
+\par\medskip\noindent\textbf{原理}\par\smallskip
+首先，我们可以想到一种 $\mathcal{O}(1)$ 求 $\sum_{i=0}^{2^k-1} \operatorname{popcount}(i)$ 的方法。
+
+以 $[0,2^5-1]$ 为例：我们首先将所有数字列出来，然后逐二进制位来看。
+\begin{itemize}
+  \item 最低位的规律是 $01010101\dots$
+  \item 第二位的规律是 $00110011\dots$
+  \item 第三位的规律是 $00001111\dots$
+\end{itemize}
+之后的规律也显然：每一位中都有一半是 $0$，另一半是 $1$。
+
+于是我们就可以得出公式：
+\[
+\sum_{i=0}^{2^k-1} \operatorname{popcount}(i) = k \times 2^{k-1}.
+\]
+然后我们将给定的 $n$ 以 $(11010110)_2=(214)_{10}$ 为例（下面指的第几位都是从高向低数的）：
+\begin{itemize}
+  \item 其第一位是 $1$：$[00000000]_2 \sim [01111111]_2 \rightarrow 0 \times 2^7 + 7 \times 2^6$
+  \item 其第二位是 $1$：$[10000000]_2 \sim [10111111]_2 \rightarrow 1 \times 2^6 + 6 \times 2^5$
+  \item 其第三位是 $0$
+  \item 其第四位是 $1$：$[11000000]_2 \sim [11001111]_2 \rightarrow 2 \times 2^4 + 4 \times 2^3$
+  \item 其第五位是 $0$
+  \item 其第六位是 $1$：$[11010000]_2 \sim [11010011]_2 \rightarrow 3 \times 2^2 + 2 \times 2^1$
+  \item 其第七位是 $1$：$[11010100]_2 \sim [11010101]_2 \rightarrow 4 \times 2^1 + 1 \times 2^0$
+  \item 其第八位是 $0$
+\end{itemize}
+但其实不管有没有贡献我们都不算他了，因为我们只需要将 $[0,n)$ 范围内的数加起来。最后再加上 $\operatorname{popcount}((11010110)_2)=5$。
+
+最终结果就是：
+\[
+\begin{aligned}
+& 0 \times 2^7 + 7 \times 2^6 \\
++& 1 \times 2^6 + 6 \times 2^5 \\
++& 2 \times 2^4 + 4 \times 2^3 \\
++& 3 \times 2^2 + 2 \times 2^1 \\
++& 4 \times 2^1 + 1 \times 2^0 \\
++& \operatorname{popcount}((11010110)_2) \\
+=&\ 448 + 256 + 64 + 16 + 9 + 5 \\
+=&\ 798
+\end{aligned}
+\]
+因为 $\operatorname{popcount}(0)=0$。
+
+\par\medskip\noindent\textbf{代码实现}\par\smallskip
+\begin{minted}{c}
+scanf("%d", &n);
+long long tot = 0;
+int cnt = 0;
+int x = n;
+while (x) {
+    if (x & 1)
+        tot += (cnt * (1 << (cnt - 1))) + (1 << cnt) * __builtin_popcount(x >> 1);
+    x >>= 1;
+    cnt++;
+}
+tot += __builtin_popcount(n);
+printf("%lld ", tot);
+\end{minted}
+
+\par\medskip\noindent\textbf{模 11 性质}\par\smallskip
+如果一个整数 $N$ 表示为
+\[
+N = a_n10^n + \cdots + a_110^1 + a_010^0,
+\]
+那么在 $\bmod 11$ 意义下
+\[
+N \equiv a_n(-1)^n + \cdots + a_1(-1)^1 + a_0(1) \pmod{11}.
+\]
+题目：\href{https://ac.nowcoder.com/acm/contest/117763/D}{小红的好数对}。
+
+\par\medskip\noindent\textbf{二分图最小点覆盖}\par\smallskip
+CF1198E（一个很好的题）。
+
+对于给出一个矩阵，然后询问他的黑点取消。这个可以转化等价为行列分别作为二分图的两个集合的点，随后，我们连边就是依靠他已经生成的黑色矩阵连边，我们给点染色，意味着此行或者此列的全部黑色已经被消除，这个染色意味着覆盖，那么问题就可以转化成二分图最小点覆盖问题。
+
+tips：二分图最小点覆盖就是最大匹配的等价，于是可以转化成最大流。
+
+同理，这个题就是如此处理，但是 $n$ 是 $10^9$ 该如何处理呢？我吃饭的时候思考了一下，发现处理这种矩阵，我们通常有一种方法：扫描线思想。那么，我们可以确定，该区间如果在行的位置起点与终点已知（坐标离散化），我们就可以利用该覆盖选满操作（线段树优化建图/离散矩阵建图）变成一个将其变成一个坐标合并信息。将点上信息设定为代价点权，随后跑一个 dinic。
+
+tips：离散化的是所有黑色矩形的行上下界和列左右界。
+
+\par\medskip\noindent\textbf{线性筛质因数分解}\par\smallskip
+需要对 $q(q\le 10^5)$ 个小于等于 $V(V\le 10^7)$ 的数进行质因数分解，可使用线性筛求出 $\mathrm{minp}$，对 $x$ 质因数分解时只需不断将 $x$ 除以 $\mathrm{minp}_x$，相较于朴素分解的 $\mathcal{O}(q\sqrt{V})$，该做法可将复杂度降至 $\mathcal{O}(V+q\log V)$。
+
+\par\medskip\noindent\textbf{同余等价条件}\par\smallskip
+同余 $a\equiv b\pmod m$ 的数学等价条件就是 $m$ 能整除 $a-b$。换句话说，$m$ 就是 $|a-b|$ 的因数。
+
+例：\url{https://codeforces.com/contest/1920/problem/C}
+
+\par\medskip\noindent\textbf{异或按位拆分}\par\smallskip
+异或的各种性质可以使用按位拆分，使用 $\bmod 2$ 加法的方式得出。比如说这个分配律：
+\[
+c_1 P_1 \oplus c_2(P_1 \oplus P_2) \oplus c_3(P_2 \oplus P_3) \oplus \cdots \oplus c_k(P_{k-1} \oplus P_k) = 0
+\]
+\[
+(c_1 \oplus c_2)P_1 \oplus (c_2 \oplus c_3)P_2 \oplus (c_3 \oplus c_4)P_3 \oplus \cdots \oplus (c_{k-1} \oplus c_k)P_{k-1} \oplus c_k P_k = 0
+\]
+对于二进制中的任意一位 $x$，都有
+\[
+c_1 P_{1,x} + c_2(P_{1,x} + P_{2,x}) + \cdots + c_k(P_{k-1,x} + P_{k,x}) \equiv 0 \pmod 2,
+\]
+\[
+(c_1 + c_2)P_{1,x} + (c_2 + c_3)P_{2,x} + \cdots + (c_{k-1} + c_k)P_{k-1,x} + c_k P_{k,x} \equiv 0 \pmod 2.
+\]
+那么不难得出上面的结论。
+
+\par\medskip\noindent\textbf{树上点集直径合并}\par\smallskip
+树上两个点集的直径可以合并。令 $S$ 的直径端点为 $(a,b)$，令 $T$ 的直径端点为 $(c,d)$，那么集合 $S$ 并上 $T$ 的直径端点为 $\{a,b,c,d\}$ 中的一对端点。所以可以用线段树来维护，每个节点存管辖区间的点集的直径端点，每个叶子节点代表一个节点，初始化为 $\{i,i\}$，之后树内节点通过左右儿子合并。
+
+\par\medskip\noindent\textbf{斐波那契数列常用结论}\par\smallskip
+
+\textbf{适用场景}：
+遇到斐波那契数列相关的计数、整除、区间加、递推表示时，可以先考虑斐波那契的常用恒等式，而不是只按定义递推。
+
+\textbf{常用结论}：
+设 $F_0=0,F_1=1$，则有：
+\[
+\gcd(F_n,F_m)=F_{\gcd(n,m)}.
+\]
+\[
+F_{n+m}=F_{n+1}F_m+F_nF_{m-1}.
+\]
+\[
+F_{2n}=F_{n+1}^2-F_{n-1}^2.
+\]
+\[
+F_{2n+1}=F_{n+1}^2+F_n^2.
+\]
+\[
+\sum_{i=1}^n F_i=F_{n+2}-1.
+\]
+对于广义斐波那契数列 $G_0=a,G_1=b,G_n=G_{n-1}+G_{n-2}$，也可以用普通斐波那契表示：
+\[
+G_n=F_{n-1}G_1+F_{n-2}G_2.
+\]
+
+\textbf{常见用途}：
+\begin{itemize}
+  \item 枚举 $n$，把 $F_na+F_{n+1}b=k$ 转成线性丢番图方程。
+  \item 区间加斐波那契数列时，把 $F_{i-l+1}$ 拆成 $F_i$ 和 $F_{i+1}$ 的线性组合，在线段树上维护两个懒标记。
+\end{itemize}
+
+\textbf{易错点}：
+\begin{itemize}
+  \item 不同题目对 $F_0,F_1$ 的定义可能不同。
+  \item 使用负下标或平移公式时要先统一定义。
+  \item 取模时除法、逆元、矩阵形式都要按模数处理。
+\end{itemize}
+
+\textbf{例题}：
+\begin{itemize}
+  \item \href{https://www.luogu.com.cn/problem/P3986}{Luogu P3986 斐波那契数列}
+  \item \href{https://codeforces.com/problemset/problem/446/C}{Codeforces 446C. DZY Loves Fibonacci Numbers}
+  \item \href{https://www.luogu.com.cn/problem/P1306}{Luogu P1306 斐波那契公约数}
+\end{itemize}
+
+\par\medskip\noindent\textbf{换根 LCA}\par\smallskip
+设 $\mathrm{LCA}_{rt}(u,v)$ 表示根为 $rt$ 时 $(u,v)$ 的最近公共祖先，那么 $\mathrm{LCA}_{rt}(u,v)$ 就是 $\{a=\operatorname{lca}_1(u,v),b=\operatorname{lca}_1(u,rt),c=\operatorname{lca}_1(v,rt)\}$ 中深度最大的点。
+
+\par\medskip\noindent\textbf{点到直线距离判断圆}\par\smallskip
+判断一条穿过点 $A$ 和点 $B$ 的直线是否穿过圆心为 $C$、半径为 $r$ 的圆，本质上就是计算圆心 $C$ 到直线 $AB$ 的最短距离 $d$，并判断 $d$ 与 $r$ 的大小关系。
+
+根据题目要求，不能切到菠萝（但边缘相切是可以的，因为交集面积为 $0$），因此合法的切线必须满足：
+\[
+d \ge r.
+\]
+由向量 $\vec{AB}$ 和 $\vec{AC}$ 构成的平行四边形的面积，有两种计算方式：
+\begin{enumerate}
+  \item 面积 $S=|\vec{AB}\times\vec{AC}|$（叉积的绝对值）；
+  \item 面积 $S=\text{底}\times\text{高}=|\vec{AB}|\cdot d$。
+\end{enumerate}
+联立两式，就可以得到点到直线的距离公式：
+\[
+d=\frac{|\vec{AB}\times\vec{AC}|}{|\vec{AB}|}.
+\]
+我们要判断 $d\ge r$。代入公式：
+\[
+\frac{|\vec{AB}\times\vec{AC}|}{|\vec{AB}|}\ge r
+\]
+\[
+|\vec{AB}\times\vec{AC}|\ge r\cdot|\vec{AB}|.
+\]
+此时 $|\vec{AB}|$ 中包含平方根（即 $\sqrt{(B_x-A_x)^2+(B_y-A_y)^2}$）。为了消除根号，我们将不等式两边同时平方：
+\[
+(\vec{AB}\times\vec{AC})^2\ge r^2\cdot|\vec{AB}|^2.
+\]
+
+\par\medskip\noindent\textbf{格雷码}\par\smallskip
+想要实现这样的数组，就是在构造\textbf{格雷码}。这里有一个简单的构造方式：构造包含 $2^n$ 个元素的 $n$ 位格雷码数组 $a$（$0\le i<2^n$）：
+\[
+a_i=i\oplus(i\gg 1).
+\]
+\textbf{应用}：
+\begin{enumerate}
+  \item 构造相邻异或值之和最小的数组；
+  \item 实现指数级搜索的 $\mathcal{O}(1)$ 增量更新（如汉诺塔问题、子集枚举优化）；
+  \item 格雷码也可以看作是 $n$ 维超立方体图的一条哈密顿路径。
+\end{enumerate}
+\textbf{例题}：
+\begin{itemize}
+  \item \href{https://www.luogu.com.cn/problem/P5657}{洛谷 P5657}
+  \item \href{https://ac.nowcoder.com/acm/problem/306749}{汉诺塔}
+  \item \href{https://ac.nowcoder.com/acm/contest/120564/C}{2026 牛客寒假营 4-C}
+  \item \href{https://codeforces.com/problemsets/acmsguru/problem/99999/249}{SGU \#249 Matrix}
+\end{itemize}
+
+\par\medskip\noindent\textbf{鞋带定理}\par\smallskip
+技巧来源：2024 ICPC 昆明邀请赛。题目链接：\url{https://codeforces.com/gym/105386/problem/M}。
+
+多边形的面积 $S$ 就是所有相邻两点构成的叉乘之和的一半：
+\[
+S=\frac{1}{2}\left|\sum_{i=1}^{n}(x_i\cdot y_{i+1}-x_{i+1}\cdot y_i)\right|.
+\]
+\[
+\max(|a-b|,|b-c|,|c-a|)=\frac{|a-b|+|b-c|+|c-a|}{2}.
+\]
+
+\par\medskip\noindent\textbf{区间内互质数对最大差}\par\smallskip
+题目链接：\url{https://atcoder.jp/contests/arc137/tasks/arc137_a}
+题目大意：给定两个正整数 $L,R(1<L<R<10^{18})$，寻找满足以下两个条件的整数对 $(x,y)$：
+\begin{itemize}
+  \item $L\le x<y\le R$；
+  \item $\gcd(x,y)=1$。
+\end{itemize}
+在所有满足条件的整数对中，求 $y-x$ 可能取得的最大值。
+
+两个数都是质数一定满足条件，又因为要使 $y-x$ 取得最大值，因此直接从端点向内枚举即可。由于两个质数之间的间隔距离非常短，因此很快就会枚举到两个质数，直接暴力枚举即可。
+
+代码：
+\begin{minted}{c++}
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+signed main() {
+    int l,r;cin>>l>>r;
+    for(int i=r-l;i>=0;i--) {
+        for(int j=l;j<=r-i;j++) {
+            if(__gcd(j,j+i)==1){cout<<i<<endl;return 0;}
+        }
+    }
+}
+\end{minted}
+
+\par\medskip\noindent\textbf{加 $k$ 模 $m$ 可达集合}\par\smallskip
+一个数如果可以不断加 $k$，然后模 $m$，可以到达的数的集合该如何表示呢？可以按照原数取余 $\gcd(k,m)$ 的值，不断加上 $\gcd(k,m)$ 来得到，表达出所有可以达到的数。
+
+例题：\href{https://codeforces.com/contest/2123/problem/G}{CF2123G}
+
+\par\medskip\noindent\textbf{最大不相邻元素和}\par\smallskip
+一般做法是用 WQS 二分，或用堆进行贪心。用堆进行贪心可以改为用栈来贪心，好写很多。
+
+\begin{minted}{c++}
+i64 maxMNonAdjacentSum(vector<i64> A, int M) {
+  A.push_back(INF64);
+  A.insert(A.begin(), INF64);
+  vector<i64> S;
+  vector<i64> X;
+  for (auto x: A) {
+    S.push_back(x);
+    while (S.size()>2 && S.end()[-3] > S.end()[-2] && S.end()[-2] <= S.end()[-1]) {
+      i64 s0 = S.back(); S.pop_back();
+      i64 s1 = S.back(); S.pop_back();
+      i64 s2 = S.back(); S.pop_back();
+      X.push_back(s1);
+      S.push_back(s0+s2-s1);
+    }
+  }
+  for (auto x: S) X.push_back(x);
+  ranges::sort(X);
+  X.erase(X.begin()+M, X.end());
+  return Sum(X);
+}
+\end{minted}
+
+相关题目：洛谷 P1484 种树，abc464\_g，[APIO/CTSC2007] 数据备份。
+
+\par\medskip\noindent\textbf{凸多边形几何中心}\par\smallskip
+设凸多边形的顶点按顺时针或逆时针排列为 $P(x_1,y_1),P(x_2,y_2),\ldots,P(x_n,y_n)$，且 $P_{n+1}=P_1$，那么首先需要计算凸多边形的面积
+\[
+S=\frac{1}{2}\sum_{i=1}^{n}(x_i y_{i+1}-x_{i+1}y_i).
+\]
+那么几何中心 $(x_0,y_0)$ 的坐标为：
+\[
+x_0=\frac{\sum_{i=1}^{n}(x_i+x_{i+1})(x_i y_{i+1}-x_{i+1}y_i)}{6S},
+\]
+\[
+y_0=\frac{\sum_{i=1}^{n}(y_i+y_{i+1})(x_i y_{i+1}-x_{i+1}y_i)}{6S}.
+\]
+例题：\href{https://atcoder.jp/contests/abc472/tasks/abc472_f}{abc472f}
+
+\par\medskip\noindent\textbf{子集异或和最大化}\par\smallskip
+给定一个序列，两个多重集（初始是空的），把每个数划分到两个\textbf{多重集}中，使得两个多重集的 \texttt{xor} 和再相加，结果最大。
+
+根据
+\[
+A+B=(A\oplus B)+2(A\ \&\ B)=S+2\cdot(A\ \&\ B),
+\]
+实际上，考虑 $S=\bigoplus_{i=1}^{n}a_i$，这是基础值，是确定的，只需要最大化 $A\ \&\ B$。
+
+\begin{itemize}
+  \item 选出一个子集 $A$，最大化 $A\ \&\ B$，而 $S=A\oplus B$；
+  \item 注意到 $S$ 为 $1$ 的位一定形如 $(a_i,b_i)=(1,0)$，它的 $\&$ 运算结果一定是 $0$；而 $S$ 为 $0$ 的位呢，形如 $(1,1)$ 或 $(0,0)$，它的 $\&$ 运算结果取决于 $a$ 这一位的值。
+\end{itemize}
+综上所述，若 $A\oplus B=S$，那么 $A\ \&\ B=A\ \&\ (\sim S)$。
+
+这个问题就转化成，给定 $S$，给定 $a[1\sim n]$，选一个子集构成 $A$，使得 $A\ \&\ (\sim S)$ 最大。实际上就是最大化 $\bigoplus_{i=1}^{m}(a_i\ \&\ (\sim S))$。这个让每个数 $a_i=a_i\ \&\ (\sim S)$，是标准的\textbf{选取一个子集，使其异或和最大}的问题，这就成了线性基模版题了。
+
+\par\medskip\noindent\textbf{凸多边形投影期望}\par\smallskip
+一个凸多边形在随机方向上投影，投影的数学期望是 $\frac{C}{\pi}$，其中 $C$ 是该凸多边形的周长。
+
+来自 2026 年四川省赛的计算几何：\url{https://qoj.ac/contest/3789/problem/18475}
+
+\par\medskip\noindent\textbf{位运算等式}\par\smallskip
+\begin{enumerate}
+  \item 加法等式：$a+b=(a\oplus b)+2(a\ \&\ b)$。
+  \begin{quote}
+    $a\oplus b$ 是不带进位的按位加法，$a\ \&\ b$ 找出均是 $1$ 的位，乘以 $2$ 代表进位左移 $1$ 位。
+  \end{quote}
+  \item 按位或等式：$a\mid b=(a\oplus b)+(a\ \&\ b)$。
+  \begin{quote}
+    按位或等于“两数不同的位”加上“两数同为 $1$ 的位”。
+  \end{quote}
+  \item 由等式 1、2 可以推得 $a+b=(a\ \&\ b)+(a\mid b)$。
+  \begin{quote}
+    证明：将等式 (1) 中的 $2(a\ \&\ b)$ 拆开：
+    \[
+    a+b=[(a\oplus b)+(a\ \&\ b)]+(a\ \&\ b),
+    \]
+    把等式 (2) 代入方括号中，直接得到：
+    \[
+    a+b=(a\mid b)+(a\ \&\ b).
+    \]
+  \end{quote}
+\end{enumerate}
+由于二进制运算独立作用于每一位，我们只需要证明在任意单个比特位上上述等式成立即可，因此也可以在固定的一位上枚举四种情况证明上述三种性质，在此不再列出。
+
+\par\medskip\noindent\textbf{根号分块快速幂}\par\smallskip
+\textbf{适用场景}：
+当需要大量计算 $a^b\bmod p$，且底数和指数范围较小或可控时，可以用根号分块预处理加速。
+
+\textbf{核心思路}：
+设块长为 $B$，将 $b=qB+r$，则 $a^b=(a^B)^q\cdot a^r$。预处理 $a^r$ 和 $(a^B)^q$，单次查询可降到 $\mathcal{O}(1)$ 或接近 $\mathcal{O}(1)$。
+
+\textbf{使用条件}：
+\begin{itemize}
+  \item 转化前后的信息必须等价，不能丢失题目真正需要维护的量。
+  \item 通常适用于该结构能够被预处理、离线排序、分组维护或用数据结构快速合并的场景。
+\end{itemize}
+
+\textbf{易错点}：
+预处理空间可能很大，只有在查询次数足够多时才划算。
+
+

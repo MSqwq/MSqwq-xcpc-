@@ -1,0 +1,227 @@
+\section{KMP 算法}
+
+\par\noindent
+字符串 $s$ 的 \textbf{border}：若 $s$ 的一个子串既是它的前缀又是它的后缀，
+则这个子串是 $s$ 的一个 border，通常不包含字符串本身。
+
+\par\noindent
+字符串 $s$ 的 \textbf{period}：即循环节。用前 $p$ 个字符向后不断复制，
+能够得到 $s$，最后一次可以只复制一部分。
+
+\begin{itemize}
+    \item \textbf{引理 1：}如果有一个长度为 $k$ 的 border，且
+    $k>|s|/2$，则 $s$ 的周期为 $|s|-k$。
+    \item \textbf{引理 2：}如果 $p,q$ 都是周期，且满足 Fine--Wilf 的长度条件
+    $|s|\ge p+q-\gcd(p,q)$，则 $\gcd(p,q)$ 也是周期。
+    \item \textbf{引理 3：}字符串 $s$ 所有长度不小于 $|s|/2$ 的 border，
+    按长度排列后构成一个等差数列。
+    \item \textbf{引理 4：}沿着 fail 链跳转，可以把所有 border 分成
+    $O(\log |s|)$ 段，每一段中的 border 构成等差数列。
+\end{itemize}
+
+\subsection{Border 与 Period}
+
+设字符串 $s=s_1s_2\cdots s_n$。若 $s$ 的长度为 $k$ 的前缀同时也是后缀，
+则称它是 $s$ 的一个 \textbf{border}，通常不考虑 $k=n$ 的情况。
+
+正整数 $p$ 是 $s$ 的 \textbf{period}，当且仅当对所有 $i>p$ 都有
+$s_i=s_{i-p}$。Border 与 Period 的基本关系为
+\[
+    k\text{ 是 }s\text{ 的 border}
+    \quad\Longleftrightarrow\quad
+    |s|-k\text{ 是 }s\text{ 的 period}.
+\]
+
+例如，$s=\texttt{abababa}$ 的 border 长度为 $5,3,1$，对应的周期分别为
+$2,4,6$。
+
+\begin{minted}{cpp}
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+const int mod=998244353;
+const int INF=0x3f3f3f3f;
+
+inline void wr(int x)
+{
+    if(x<0)putchar('-'),x=-x;
+    if(x>=10)wr(x/10);putchar(x%10+'0');
+}
+
+const int N=1e6+10;
+char s[N],t[N];
+int fail[N];
+int main()
+{
+    cin>>s+1>>t+1;
+    int n=strlen(s+1),m=strlen(t+1);
+
+    // 预处理模式串 t 的 fail 数组
+    for(int i=1,j=0;i<m;i++)
+    {
+        while(j&&t[i+1]!=t[j+1])j=fail[j];
+        if(t[i+1]==t[j+1])j++;
+        fail[i+1]=j;
+    }
+
+    // 在文本串 s 中进行匹配
+    for(int i=0,j=0;i<n;i++)
+    {
+        while(j&&s[i+1]!=t[j+1])j=fail[j];
+        if(s[i+1]==t[j+1])j++;
+        if(j==m)
+        {
+            wr(i-m+2),puts("");
+            // 回退到最长真 Border，保留重叠匹配
+            j=fail[j];
+        }
+    }
+
+    for(int i=1;i<=m;i++)wr(fail[i]),putchar(' ');
+    return 0;
+}
+\end{minted}
+
+\subsection{Border 等差数列}
+
+一个字符串的所有 border 可以被分成 $O(\log |s|)$ 段等差数列。
+在 KMP 匹配中，如果当前 border 长度不小于原串的一半，接下来的 border
+就会构成等差数列，可以一次跳过一整段。每次跨段后长度至少减半，
+所以最多跳 $O(\log n)$ 次。
+
+若当前 border 长度为 $p$，且 $\mathrm{fail}[p]>p/2$，令
+\[
+    d=p-\mathrm{fail}[p].
+\]
+同一段中的 border 长度相差 $d$，可以使用下面的方式快速跳转：
+
+\begin{minted}{cpp}
+int common_border(int p,int q)
+{
+    p=fail[p],q=fail[q];
+    while(p!=q)
+    {
+        if(p<q)swap(p,q);
+        if(fail[p]>p/2)
+        {
+            int d=p-fail[p];
+            if(p%d==q%d)p=q;
+            else p=p%d+d;
+        }
+        else p=fail[p];
+    }
+    return p;
+}
+\end{minted}
+
+\subsection{例题：最小周期}
+
+\begin{tcolorbox}
+给定字符串 $s$，求它的最小完整重复节长度。
+\end{tcolorbox}
+
+令 $p=n-\mathrm{fail}[n]$。若 $n\bmod p=0$，答案为 $p$；否则答案为 $n$。
+
+\begin{minted}{cpp}
+int p=n-fail[n];
+if(n%p==0)wr(p);
+else wr(n);
+\end{minted}
+
+\subsection{例题：前缀最长公共 Border}
+
+\begin{tcolorbox}
+有 $m$ 组询问，每组给定 $p,q$，求字符串 $s$ 的 $p$ 前缀和 $q$ 前缀的
+最长公共真 Border 长度。
+\end{tcolorbox}
+
+先令 $p=\mathrm{fail}[p],q=\mathrm{fail}[q]$，再在两条 fail 链上向上跳。
+结合 Border 等差数列跳转后，单次询问复杂度为 $O(\log n)$。
+
+\begin{minted}{cpp}
+int solve(int p,int q)
+{
+    p=fail[p],q=fail[q];
+    while(p!=q)
+    {
+        if(p<q)swap(p,q);
+        if(fail[p]>p/2)
+        {
+            int d=p-fail[p];
+            if(p%d==q%d)p=q;
+            else p=p%d+d;
+        }
+        else p=fail[p];
+    }
+    return p;
+}
+\end{minted}
+
+\subsection{例题：最小重复字符矩阵}
+
+\begin{tcolorbox}
+$q$ 组询问，每次给出一个矩形 $(a,b,c,d)$，求该矩形能够重复铺满的最小
+字符矩阵面积。将行、列看成字符串中的字符，并使用 Hash 加速 KMP 匹配。
+\end{tcolorbox}
+
+\begin{minted}{cpp}
+typedef unsigned long long ull;
+const int N=2010;
+const ull P=13331;
+int n,q,fail[N];
+char s[N][N];
+ull hr[N][N],hc[N][N],pw[N];
+
+bool same_col(int i,int j,int l,int r)
+{
+    return hc[i][r]-hc[i][l-1]*pw[r-l+1]
+        ==hc[j][r]-hc[j][l-1]*pw[r-l+1];
+}
+bool same_row(int i,int j,int l,int r)
+{
+    return hr[i][r]-hr[i][l-1]*pw[r-l+1]
+        ==hr[j][r]-hr[j][l-1]*pw[r-l+1];
+}
+
+int main()
+{
+    cin>>n>>q;
+    for(int i=1;i<=n;i++)cin>>s[i]+1;
+    pw[0]=1;
+    for(int i=1;i<=n;i++)pw[i]=pw[i-1]*P;
+
+    for(int i=1;i<=n;i++)
+        for(int j=1;j<=n;j++)
+            hr[i][j]=hr[i][j-1]*P+s[i][j];
+    for(int j=1;j<=n;j++)
+        for(int i=1;i<=n;i++)
+            hc[j][i]=hc[j][i-1]*P+s[i][j];
+
+    while(q--)
+    {
+        int a,b,c,d;cin>>a>>b>>c>>d;
+        int w=d-b+1,h=c-a+1;
+
+        for(int i=2,j=0;i<=w;i++)
+        {
+            while(j&&!same_col(i+b-1,j+b,a,c))j=fail[j];
+            if(same_col(i+b-1,j+b,a,c))j++;
+            fail[i]=j;
+        }
+        int ans=w-fail[w];
+
+        for(int i=2,j=0;i<=h;i++)
+        {
+            while(j&&!same_row(i+a-1,j+a,b,d))j=fail[j];
+            if(same_row(i+a-1,j+a,b,d))j++;
+            fail[i]=j;
+        }
+        ans*=h-fail[h];
+        wr(ans),puts("");
+    }
+    return 0;
+}
+\end{minted}
+
+预处理 Hash 的复杂度为 $O(n^2)$，每次询问的复杂度为
+$O((d-b+1)+(c-a+1))$。

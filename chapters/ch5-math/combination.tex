@@ -1,0 +1,389 @@
+% 可直接插入主文档的组合数 LaTeX 片段
+% 导言区需要加载：ctex、amsmath、amssymb、tcolorbox、minted
+
+\section{组合数}
+
+\subsection{常见公式和经典问题}
+
+记
+\[
+    \binom{n}{m}=C_n^m=\frac{n!}{m!(n-m)!},\qquad
+    A_n^m=\frac{n!}{(n-m)!}=\binom{n}{m}m!.
+\]
+当 $m<0$ 或 $m>n$ 时，约定 $\binom{n}{m}=0$。
+
+\begin{itemize}
+    \item \textbf{组合数：}从 $n$ 个不同物品中选出 $m$ 个，不计顺序，方案数为
+    $\binom{n}{m}$。
+    \item \textbf{排列数：}从 $n$ 个不同物品中选出 $m$ 个并排列，方案数为
+    $A_n^m=\binom{n}{m}m!$。
+    \item \textbf{二项式定理：}
+    \[
+        (x+y)^n=\sum_{k=0}^{n}\binom{n}{k}x^ky^{n-k}.
+    \]
+    \item \textbf{多项式定理：}
+    \[
+        (x_1+x_2+\cdots+x_m)^n
+        =\sum_{k_1+\cdots+k_m=n}
+        \frac{n!}{k_1!k_2!\cdots k_m!}
+        x_1^{k_1}x_2^{k_2}\cdots x_m^{k_m}.
+    \]
+    \item 从 $n$ 个物品中可重复取得 $k$ 个，每次有顺序，方案数为 $n^k$。
+    \item 从 $n$ 个物品中不可重复取 $k$ 个做排列，方案数为
+    $A_n^k=\binom{n}{k}k!$。
+    \item 从 $n$ 个物品中选 $k$ 个做圆排列，若只考虑旋转同构，方案数为
+    $\binom{n}{k}(k-1)!=\dfrac{n!}{k(n-k)!}$。
+    若翻转也视为相同，通常在 $k>2$ 时再除以 $2$。
+    \item $n$ 个物品中，第 $i$ 种有 $k_i$ 个且 $\sum_{i=1}^m k_i=n$，
+    全部排列数为
+    \[
+        \frac{n!}{k_1!k_2!\cdots k_m!}.
+    \]
+    \item 从 $n$ 种物品中可重复选 $k$ 个做组合，方案数为
+    \[
+        \binom{n+k-1}{k}=\binom{n+k-1}{n-1}.
+    \]
+    \item 从 $n$ 个位置中选 $k$ 个互不相邻的位置，方案数为
+    $\binom{n-k+1}{k}$。
+    \item 从 $n$ 个位置中选 $k$ 个，要求首尾也不能同时选，方案数为
+    \[\binom{n-k+1}{k}-\binom{n-k-1}{k-2}.\]
+\end{itemize}
+
+\subsection{基本性质}
+
+\begin{itemize}
+    \item \textbf{对称性：}
+    \[
+        \binom{n}{k}=\binom{n}{n-k}.
+    \]
+    \item \textbf{Pascal 递推：}
+    \[
+        \binom{n}{k}=\binom{n-1}{k-1}+\binom{n-1}{k}.
+    \]
+    \item \textbf{边界：} $\binom{n}{0}=\binom{n}{n}=1$。
+    \item \textbf{相邻项比值：}
+    \[
+        \frac{\binom{n}{k+1}}{\binom{n}{k}}=\frac{n-k}{k+1}.
+    \]
+    \item \textbf{组合数递推：}
+    \[
+        k\binom{n}{k}=n\binom{n-1}{k-1},\qquad
+        (n-k)\binom{n}{k}=n\binom{n-1}{k}.
+    \]
+    \item \textbf{先选后选：}
+    \[
+        \binom{n}{k}\binom{k}{r}
+        =\binom{n}{r}\binom{n-r}{k-r}.
+    \]
+    \item \textbf{下降幂：}
+    \[
+        k^{\underline r}=k(k-1)\cdots(k-r+1)=r!\binom{k}{r}.
+    \]
+\end{itemize}
+
+\subsection{插板法}
+
+非负整数解的个数为
+\[
+    x_1+x_2+\cdots+x_n=k,\quad x_i\ge0
+    \quad\Longrightarrow\quad
+    \binom{n+k-1}{n-1}.
+\]
+正整数解的个数为
+\[
+    x_1+x_2+\cdots+x_n=k,\quad x_i\ge1
+    \quad\Longrightarrow\quad
+    \binom{k-1}{n-1}.
+\]
+若 $x_i\ge a_i$，先令 $y_i=x_i-a_i$ 再使用插板法。
+
+带上界时常用容斥：若 $0\le x_i\le b_i$，则
+\[
+\#\{x_1+\cdots+x_n=k\}
+ =\sum_{S\subseteq\{1,\dots,n\}}(-1)^{|S|}
+ \binom{k-\sum_{i\in S}(b_i+1)+n-1}{n-1}.
+\]
+
+\subsection{经典恒等式}
+
+\begin{itemize}
+    \item \textbf{二项式求和：}
+    \[
+        \sum_{k=0}^{n}\binom{n}{k}=2^n,
+        \qquad
+        \sum_{k=0}^{n}(-1)^k\binom{n}{k}=0\quad(n>0).
+    \]
+    \item \textbf{带权二项式和：}
+    \[
+        \sum_{k=0}^{n}x^k\binom{n}{k}=(1+x)^n.
+    \]
+    特别地，$\sum_{k=0}^n2^k\binom{n}{k}=3^n$。
+    \item \textbf{一次加权和：}
+    \[
+        \sum_{k=0}^{n}k\binom{n}{k}=n2^{n-1}.
+    \]
+    \item \textbf{二次加权和：}
+    \[
+        \sum_{k=0}^{n}k(k-1)\binom{n}{k}=n(n-1)2^{n-2},
+    \]
+    \[
+        \sum_{k=0}^{n}k^2\binom{n}{k}=n(n+1)2^{n-2}.
+    \]
+    \item \textbf{一般下降幂加权和：}
+    \[
+        \sum_{k=0}^{n}k^{\underline r}\binom{n}{k}
+        =n^{\underline r}2^{n-r}.
+    \]
+    \item \textbf{有限差分：}
+    \[
+        \sum_{k=0}^{n}(-1)^k\binom{n}{k}k^m=0\quad(m<n),
+    \]
+    \[
+        \sum_{k=0}^{n}(-1)^k\binom{n}{k}k^n=(-1)^n n!.
+    \]
+    \item \textbf{平方和：}
+    \[
+        \sum_{k=0}^{n}\binom{n}{k}^2=\binom{2n}{n}.
+    \]
+    \item \textbf{相邻平方和：}
+    \[
+        \sum_{k=0}^{n}\binom{n}{k}\binom{n}{k+1}
+        =\binom{2n}{n-1}.
+    \]
+    \item \textbf{冰球杆恒等式：}
+    \[
+        \sum_{i=r}^{n}\binom{i}{r}=\binom{n+1}{r+1}.
+    \]
+\end{itemize}
+
+\subsection{范特蒙德卷积及其变形}
+
+\textbf{范特蒙德卷积：}
+\[
+    \sum_{i=0}^{k}\binom{r}{i}\binom{s}{k-i}
+    =\binom{r+s}{k}.
+\]
+它表示从 $r+s$ 个物品中选 $k$ 个，按前 $r$ 个中选了多少分类。
+
+常用变形包括
+\[
+    \sum_{i=0}^{n}\binom{r}{i}\binom{s}{n-i}=\binom{r+s}{n},
+\]
+\[
+    \sum_i(-1)^i\binom{r}{i}\binom{s}{k-i}
+    =[x^k](1-x)^r(1+x)^s.
+\]
+特别地，利用 $\binom{s}{i}=\binom{s}{s-i}$ 可得
+\[
+    \sum_{i=0}^{\min(r,s)}\binom{r}{i}\binom{s}{i}
+    =\binom{r+s}{r}.
+\]
+
+特别常用的形式为
+\[
+    \sum_{i=0}^{n}\binom{n}{i}\binom{m}{k-i}
+    =\binom{n+m}{k},
+\]
+\[
+    \sum_{i=0}^{n}\binom{n}{i}^2=\binom{2n}{n},
+    \qquad
+    \sum_{i=0}^{n}\binom{n}{i}\binom{n}{i+1}=\binom{2n}{n-1}.
+\]
+还有
+\[
+    \sum_{i=0}^{n}\binom{i}{r}\binom{n-i}{s}
+    =\binom{n+1}{r+s+1}.
+\]
+
+\subsection{二项式反演}
+
+若
+\[
+    f(n)=\sum_{k=0}^{n}\binom{n}{k}g(k),
+\]
+则
+\[
+    g(n)=\sum_{k=0}^{n}(-1)^{n-k}\binom{n}{k}f(k).
+\]
+
+等价地，若
+\[
+    f(n)=\sum_{k=0}^{n}(-1)^k\binom{n}{k}g(k),
+\]
+则
+\[
+    g(n)=\sum_{k=0}^{n}(-1)^k\binom{n}{k}f(k).
+\]
+
+\subsection{容斥原理}
+
+有限集合的并集大小为
+\[
+    \left|\bigcup_{i=1}^{n}A_i\right|
+    =\sum_{\emptyset\ne S\subseteq\{1,\dots,n\}}
+    (-1)^{|S|+1}\left|\bigcap_{i\in S}A_i\right|.
+\]
+
+也可以写成按交集大小分组的形式：
+\[
+    \left|\bigcup_iA_i\right|
+    =\sum_i|A_i|-\sum_{i<j}|A_i\cap A_j|
+    +\sum_{i<j<k}|A_i\cap A_j\cap A_k|-\cdots.
+\]
+
+全集 $U$ 中同时满足所有条件 $S_i$ 的元素个数为
+\[
+    \left|\bigcap_{i=1}^{n}S_i\right|
+    =|U|-\left|\bigcup_{i=1}^{n}\overline{S_i}\right|.
+\]
+
+\subsection{Catalan 数}
+
+第 $n$ 个 Catalan 数为
+\[
+    \mathrm{Cat}_n
+    =\frac{1}{n+1}\binom{2n}{n}
+    =\binom{2n}{n}-\binom{2n}{n+1}.
+\]
+常见模型包括：合法括号序列、$n+1$ 个叶子的不同二叉树、凸多边形三角剖分、
+从左上到右下且不越过对角线的路径等。
+
+递推式为
+\[
+    \mathrm{Cat}_0=1,\qquad
+    \mathrm{Cat}_{n+1}=\sum_{i=0}^{n}\mathrm{Cat}_i\mathrm{Cat}_{n-i}.
+\]
+
+\subsection{错排数}
+
+$n$ 个元素的错排数记为 $D_n$，即每个元素都不在原位置：
+\[
+    D_n=n!\sum_{i=0}^{n}\frac{(-1)^i}{i!}.
+\]
+常用递推为
+\[
+    D_n=(n-1)(D_{n-1}+D_{n-2}),
+    \qquad D_0=1,\ D_1=0.
+\]
+
+\subsection{其他常用模型}
+
+\begin{itemize}
+    \item 长度为 $n$ 的 01 串中恰有 $k$ 个 $1$：$\binom{n}{k}$。
+    \item 长度为 $n$ 的 01 串中恰有 $k$ 个连续段：
+    $2\binom{n-1}{k-1}$。
+    \item 从 $1,2,\dots,n$ 中选 $k$ 个不相邻数：$\binom{n-k+1}{k}$。
+    \item 斐波那契数的组合表示：
+    \[
+        F_{n+1}=\sum_{k\ge0}\binom{n-k}{k}.
+    \]
+    \item $n$ 个不同元素的圆排列：$(n-1)!$；若还要区分翻转，需根据题意处理镜像。
+\end{itemize}
+
+\subsection{询问排列数、组合数}
+
+当模数 $\mathrm{mod}=998244353$ 为质数且 $n<\mathrm{mod}$ 时，预处理阶乘和
+阶乘逆元即可在 $O(1)$ 时间回答组合数与排列数询问。
+
+\begin{minted}{cpp}
+const int N=1000010;
+const int mod=998244353;
+int fac[N],ifac[N];
+
+int qpow(int a,int b)
+{
+    int res=1;
+    while(b)
+    {
+        if(b&1)res=(ll)res*a%mod;
+        a=(ll)a*a%mod;
+        b>>=1;
+    }
+    return res;
+}
+
+void init()
+{
+    fac[0]=ifac[0]=1;
+    for(int i=1;i<N;i++)fac[i]=(ll)fac[i-1]*i%mod;
+    ifac[N-1]=qpow(fac[N-1],mod-2);
+    for(int i=N-2;i>=0;i--)
+        ifac[i]=(ll)ifac[i+1]*(i+1)%mod;
+}
+
+int C(int n,int m)
+{
+    if(m<0||m>n)return 0;
+    return (ll)fac[n]*ifac[m]%mod*ifac[n-m]%mod;
+}
+
+int P(int n,int m)
+{
+    if(m<0||m>n)return 0;
+    return (ll)fac[n]*ifac[n-m]%mod;
+}
+\end{minted}
+
+\subsection{Lucas 定理}
+
+当 $n$ 很大而质数模数 $p$ 较小时，Lucas 定理为
+\[
+    \binom{n}{m}\bmod p
+    =\binom{\lfloor n/p\rfloor}{\lfloor m/p\rfloor}
+    \binom{n\bmod p}{m\bmod p}\bmod p.
+\]
+递归次数为 $O(\log_p n)$，每次组合数在 $[0,p)$ 内计算。
+下面的 Lucas 模板要求先把 $fac,ifac$ 预处理到 $p-1$，因此适合质数模数较小的情形。
+
+\begin{minted}{cpp}
+int Csmall(int n,int m)
+{
+    if(m<0||m>n)return 0;
+    return (ll)fac[n]*ifac[m]%mod*ifac[n-m]%mod;
+}
+
+int Lucas(long long n,long long m)
+{
+    if(m<0||m>n)return 0;
+    if(!m)return 1;
+    return (ll)Csmall(n%mod,m%mod)
+        *Lucas(n/mod,m/mod)%mod;
+}
+\end{minted}
+
+\subsection{Pascal 三角形}
+
+当模数不适合使用逆元，或 $n$ 较小时，可以直接使用 Pascal 递推：
+\[
+    \binom{i}{0}=\binom{i}{i}=1,\qquad
+    \binom{i}{j}=\binom{i-1}{j-1}+\binom{i-1}{j}.
+\]
+时间复杂度为 $O(n^2)$，空间可以滚动到 $O(n)$。
+
+\begin{minted}{cpp}
+for(int i=0;i<=n;i++)
+{
+    C[i][0]=C[i][i]=1;
+    for(int j=1;j<i;j++)
+        C[i][j]=(C[i-1][j-1]+C[i-1][j])%mod;
+}
+\end{minted}
+
+\subsection{常用结论速查}
+
+\begin{center}
+\begin{tabular}{c|c}
+\hline
+问题 & 答案 \\
+\hline
+从 $n$ 个不同物品选 $k$ 个 & $\binom{n}{k}$ \\
+从 $n$ 个不同物品选 $k$ 个排列 & $\dfrac{n!}{(n-k)!}$ \\
+非负解 $x_1+\cdots+x_n=k$ & $\binom{n+k-1}{n-1}$ \\
+正整数解 $x_1+\cdots+x_n=k$ & $\binom{k-1}{n-1}$ \\
+$n$ 个位置选 $k$ 个不相邻 & $\binom{n-k+1}{k}$ \\
+圆排列 $n$ 个不同物品 & $(n-1)!$ \\
+错排 & $n!\sum_{i=0}^{n}(-1)^i/i!$ \\
+Catalan & $\dfrac{1}{n+1}\binom{2n}{n}$ \\
+\hline
+\end{tabular}
+\end{center}
